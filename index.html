@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>엠프코 경영현황</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="topbar-logo">AMPCO</div>
+  <div class="topbar-title">엠프코(주) 경영현황</div>
+  <div class="topbar-right">
+    <div class="topbar-time" id="clock"></div>
+    <button class="theme-btn" onclick="toggleTheme()" title="테마 전환">🌙</button>
+  </div>
+</div>
+
+<!-- Layout -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="nav-group">
+      <div class="nav-label">개요</div>
+      <div class="nav-item active" data-page="home" onclick="goto('home',this)">
+        <span class="nav-icon">🏠</span><span>홈 대시보드</span>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">이메일</div>
+      <div class="nav-item" data-page="email" onclick="goto('email',this)">
+        <span class="nav-icon">📧</span><span>Outlook 메일</span>
+        <span class="badge-count" id="unread-count" style="display:none"></span>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">재무</div>
+      <div class="nav-item" data-page="finance" onclick="goto('finance',this)">
+        <span class="nav-icon">📊</span><span>자산 현황</span>
+      </div>
+      <div class="nav-item" data-page="trade" onclick="goto('trade',this)">
+        <span class="nav-icon">🚢</span><span>수출입 현황</span>
+      </div>
+      <div class="nav-item" data-page="sales" onclick="goto('sales',this)">
+        <span class="nav-icon">💰</span><span>매출 현황</span>
+      </div>
+      <div class="nav-item" data-page="tax" onclick="goto('tax',this)">
+        <span class="nav-icon">📋</span><span>연말정산</span>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">자산</div>
+      <div class="nav-item" data-page="property" onclick="goto('property',this)">
+        <span class="nav-icon">🏭</span><span>사무동·공장</span>
+      </div>
+      <div class="nav-item" data-page="vehicle" onclick="goto('vehicle',this)">
+        <span class="nav-icon">🚗</span><span>차량 관리</span>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">재고·부품</div>
+      <div class="nav-item" data-page="inventory" onclick="goto('inventory',this)">
+        <span class="nav-icon">📦</span><span>부품 재고</span>
+      </div>
+      <div class="nav-item" data-page="parts" onclick="goto('parts',this)">
+        <span class="nav-icon">⚙️</span><span>부품 스펙·단가</span>
+      </div>
+      <div class="nav-item" data-page="suppliers" onclick="goto('suppliers',this)">
+        <span class="nav-icon">🏢</span><span>구매 업체</span>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="btn btn-sm" onclick="exportData()">💾 데이터 내보내기</button>
+      <label class="btn btn-sm" style="cursor:pointer">📂 데이터 불러오기<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main" id="main-content">
+
+    <!-- ── HOME ── -->
+    <section class="page active" id="page-home">
+      <div class="page-header">
+        <div><h1 class="page-title">홈 대시보드</h1><p class="page-sub" id="today-date"></p></div>
+      </div>
+      <div class="kpi-row" id="kpi-row"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>📈 연간 매출 추이</h3></div>
+          <div class="card-body">
+            <div class="chart-area" id="sales-chart"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>⚠️ 재고 부족 알림</h3></div>
+          <div class="card-body" id="low-stock-panel"></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>📧 최근 메일</h3></div>
+          <div class="card-body" id="recent-mail-panel"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>🚗 차량 보험 현황</h3></div>
+          <div class="card-body" id="vehicle-panel"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── EMAIL ── -->
+    <section class="page" id="page-email">
+      <div class="page-header">
+        <h1 class="page-title">📧 Outlook 메일</h1>
+        <button class="btn btn-primary" onclick="openModal('emailModal')">+ 메일 등록</button>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3>받은 편지함</h3>
+          <select class="select-sm" id="email-filter" onchange="renderEmails()">
+            <option value="all">전체</option>
+            <option value="unread">미읽음</option>
+            <option value="important">중요</option>
+          </select>
+        </div>
+        <div id="email-list"></div>
+        <div id="email-detail" class="email-detail"></div>
+      </div>
+    </section>
+
+    <!-- ── FINANCE ── -->
+    <section class="page" id="page-finance">
+      <div class="page-header">
+        <h1 class="page-title">📊 자산 현황</h1>
+        <button class="btn btn-primary" onclick="openModal('financeModal')">+ 기간 추가</button>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>재무상태표 이력</h3></div>
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>연도</th><th>자산총계 (천원)</th><th>부채총계 (천원)</th>
+            <th>자본총계 (천원)</th><th>부채비율</th><th>비고</th><th></th>
+          </tr></thead><tbody id="finance-tbody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TRADE ── -->
+    <section class="page" id="page-trade">
+      <div class="page-header">
+        <h1 class="page-title">🚢 수출입 현황</h1>
+        <button class="btn btn-primary" onclick="openModal('tradeModal')">+ 거래 등록</button>
+      </div>
+      <div class="tabs" id="trade-tabs">
+        <div class="tab active" onclick="switchTab('trade','수출',this)">수출</div>
+        <div class="tab" onclick="switchTab('trade','수입',this)">수입</div>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>구분</th><th>날짜</th><th>거래처</th><th>품목</th>
+            <th>금액 (USD)</th><th>통관</th><th>비고</th><th></th>
+          </tr></thead><tbody id="trade-tbody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SALES ── -->
+    <section class="page" id="page-sales">
+      <div class="page-header">
+        <h1 class="page-title">💰 매출 현황</h1>
+        <button class="btn btn-primary" onclick="openModal('salesModal')">+ 매출 등록</button>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>연도</th><th>월</th><th>매출 (천원)</th><th>원가 (천원)</th>
+            <th>총이익 (천원)</th><th>이익률</th><th>거래처</th><th></th>
+          </tr></thead><tbody id="sales-tbody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TAX ── -->
+    <section class="page" id="page-tax">
+      <div class="page-header">
+        <h1 class="page-title">📋 연말정산</h1>
+        <button class="btn btn-primary" onclick="openModal('taxModal')">+ 항목 추가</button>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>귀속연도</th><th>성명</th><th>총급여 (원)</th><th>결정세액 (원)</th>
+            <th>환급/추납</th><th>상태</th><th>비고</th><th></th>
+          </tr></thead><tbody id="tax-tbody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PROPERTY ── -->
+    <section class="page" id="page-property">
+      <div class="page-header">
+        <h1 class="page-title">🏭 사무동·공장 가치</h1>
+        <button class="btn btn-primary" onclick="openModal('propModal')">+ 자산 추가</button>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>자산명</th><th>종류</th><th>면적</th><th>취득가 (천원)</th>
+            <th>현재가액 (천원)</th><th>기준일</th><th>임대현황</th><th></th>
+          </tr></thead><tbody id="property-tbody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── VEHICLE ── -->
+    <section class="page" id="page-vehicle">
+      <div class="page-header">
+        <h1 class="page-title">🚗 차량 관리</h1>
+        <button class="btn btn-primary" onclick="openModal('vehicleModal')">+ 차량 추가</button>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>차량명</th><th>번호판</th><th>계약일</th><th>보험사</th>
+            <th>보험기간</th><th>보험료 (원/년)</th><th>메모</th><th></th>
+          </tr></thead><tbody id="vehicle-tbody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── INVENTORY ── -->
+    <section class="page" id="page-inventory">
+      <div class="page-header">
+        <h1 class="page-title">📦 부품 재고</h1>
+        <button class="btn btn-primary" onclick="openModal('invModal')">+ 재고 등록</button>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>부품코드</th><th>부품명</th><th>현재고</th><th>최소재고</th>
+            <th>단위</th><th>위치</th><th>최종입고일</th><th>상태</th><th></th>
+          </tr></thead><tbody id="inv-tbody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PARTS ── -->
+    <section class="page" id="page-parts">
+      <div class="page-header">
+        <h1 class="page-title">⚙️ 부품 스펙·단가</h1>
+        <button class="btn btn-primary" onclick="openModal('partModal')">+ 부품 등록</button>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>코드</th><th>부품명(한)</th><th>부품명(영)</th><th>호환모델</th>
+            <th>단가(USD)</th><th>단가(KRW)</th><th>공급처</th><th>스펙</th><th></th>
+          </tr></thead><tbody id="parts-tbody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SUPPLIERS ── -->
+    <section class="page" id="page-suppliers">
+      <div class="page-header">
+        <h1 class="page-title">🏢 구매 업체</h1>
+        <button class="btn btn-primary" onclick="openModal('supplierModal')">+ 업체 등록</button>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>업체명</th><th>구분</th><th>담당자</th><th>연락처</th>
+            <th>이메일</th><th>주요품목</th><th>결제조건</th><th>비고</th><th></th>
+          </tr></thead><tbody id="supplier-tbody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── MODALS ── -->
+<div id="modal-overlay" class="modal-overlay" onclick="closeAllModals(event)">
+
+  <!-- Email -->
+  <div class="modal" id="emailModal">
+    <div class="modal-head"><h3>📧 메일 등록</h3><button onclick="closeModal('emailModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field f2"><label>발신자</label><input id="em-from" placeholder="carrier@example.com"></div>
+        <div class="field"><label>날짜</label><input id="em-date" type="date"></div>
+      </div>
+      <div class="form-row"><div class="field f1"><label>제목</label><input id="em-subject" placeholder="메일 제목"></div></div>
+      <div class="form-row"><div class="field f1"><label>내용</label><textarea id="em-body" rows="4"></textarea></div></div>
+      <div class="form-row">
+        <div class="field"><label>구분</label><select id="em-tag"><option>일반</option><option>중요</option><option>거래처</option><option>세무/회계</option><option>수출입</option></select></div>
+        <div class="field"><label>읽음</label><select id="em-read"><option value="0">미읽음</option><option value="1">읽음</option></select></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('emailModal')">취소</button><button class="btn btn-primary" onclick="addEmail()">저장</button></div>
+  </div>
+
+  <!-- Finance -->
+  <div class="modal" id="financeModal">
+    <div class="modal-head"><h3>📊 재무상태 추가</h3><button onclick="closeModal('financeModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label>연도</label><input id="fi-year" type="number" placeholder="2025"></div>
+        <div class="field f2"><label>비고</label><input id="fi-note" placeholder="제22기"></div>
+      </div>
+      <div class="form-row">
+        <div class="field f1"><label>자산총계 (천원)</label><input id="fi-asset" type="number"></div>
+        <div class="field f1"><label>부채총계 (천원)</label><input id="fi-debt" type="number"></div>
+        <div class="field f1"><label>자본총계 (천원)</label><input id="fi-equity" type="number"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('financeModal')">취소</button><button class="btn btn-primary" onclick="addFinance()">저장</button></div>
+  </div>
+
+  <!-- Trade -->
+  <div class="modal" id="tradeModal">
+    <div class="modal-head"><h3>🚢 수출입 거래 등록</h3><button onclick="closeModal('tradeModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label>구분</label><select id="tr-type"><option>수출</option><option>수입</option></select></div>
+        <div class="field"><label>날짜</label><input id="tr-date" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="field f1"><label>거래처</label><input id="tr-partner" placeholder="Carrier Transicold USA"></div>
+        <div class="field f1"><label>품목</label><input id="tr-item" placeholder="Filter Drier"></div>
+      </div>
+      <div class="form-row">
+        <div class="field f1"><label>금액 (USD)</label><input id="tr-amount" type="number"></div>
+        <div class="field"><label>통관</label><select id="tr-status"><option>진행중</option><option>완료</option><option>보류</option></select></div>
+      </div>
+      <div class="form-row"><div class="field f1"><label>비고</label><input id="tr-note"></div></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('tradeModal')">취소</button><button class="btn btn-primary" onclick="addTrade()">저장</button></div>
+  </div>
+
+  <!-- Sales -->
+  <div class="modal" id="salesModal">
+    <div class="modal-head"><h3>💰 매출 등록</h3><button onclick="closeModal('salesModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label>연도</label><input id="sa-year" type="number" placeholder="2025"></div>
+        <div class="field"><label>월</label><input id="sa-month" type="number" min="1" max="12" placeholder="1"></div>
+        <div class="field f2"><label>거래처</label><input id="sa-client" placeholder="Carrier Transicold"></div>
+      </div>
+      <div class="form-row">
+        <div class="field f1"><label>매출 (천원)</label><input id="sa-revenue" type="number"></div>
+        <div class="field f1"><label>원가 (천원)</label><input id="sa-cogs" type="number"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('salesModal')">취소</button><button class="btn btn-primary" onclick="addSales()">저장</button></div>
+  </div>
+
+  <!-- Tax -->
+  <div class="modal" id="taxModal">
+    <div class="modal-head"><h3>📋 연말정산 추가</h3><button onclick="closeModal('taxModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label>귀속연도</label><input id="tx-year" type="number" placeholder="2025"></div>
+        <div class="field f1"><label>성명</label><input id="tx-name"></div>
+        <div class="field"><label>상태</label><select id="tx-status"><option>완료</option><option>진행중</option><option>미신고</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="field f1"><label>총급여 (원)</label><input id="tx-salary" type="number"></div>
+        <div class="field f1"><label>결정세액 (원)</label><input id="tx-tax" type="number"></div>
+        <div class="field f1"><label>환급(+)/추납(-)</label><input id="tx-refund" type="number"></div>
+      </div>
+      <div class="form-row"><div class="field f1"><label>비고</label><input id="tx-note"></div></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('taxModal')">취소</button><button class="btn btn-primary" onclick="addTax()">저장</button></div>
+  </div>
+
+  <!-- Property -->
+  <div class="modal" id="propModal">
+    <div class="modal-head"><h3>🏭 부동산 자산 추가</h3><button onclick="closeModal('propModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field f2"><label>자산명</label><input id="pr-name" placeholder="본사 사무동"></div>
+        <div class="field"><label>종류</label><select id="pr-type"><option>건물</option><option>토지</option><option>공장</option><option>창고</option><option>기타</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="field f1"><label>면적</label><input id="pr-size" placeholder="330㎡"></div>
+        <div class="field"><label>기준일</label><input id="pr-date" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="field f1"><label>취득가 (천원)</label><input id="pr-cost" type="number"></div>
+        <div class="field f1"><label>현재가액 (천원)</label><input id="pr-value" type="number"></div>
+      </div>
+      <div class="form-row"><div class="field f1"><label>임대현황</label><input id="pr-rental" placeholder="월 495만원 (2024.01~)"></div></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('propModal')">취소</button><button class="btn btn-primary" onclick="addProperty()">저장</button></div>
+  </div>
+
+  <!-- Vehicle -->
+  <div class="modal" id="vehicleModal">
+    <div class="modal-head"><h3>🚗 차량 추가</h3><button onclick="closeModal('vehicleModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field f2"><label>차량명</label><input id="vh-name" placeholder="GV70"></div>
+        <div class="field f1"><label>번호판</label><input id="vh-plate" placeholder="123가 4567"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>계약일</label><input id="vh-date" type="date"></div>
+        <div class="field f2"><label>보험사</label><input id="vh-insurer" placeholder="삼성화재"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>보험 시작</label><input id="vh-ins-start" type="date"></div>
+        <div class="field"><label>보험 종료</label><input id="vh-ins-end" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="field f1"><label>보험료 (원/년)</label><input id="vh-ins-fee" type="number" placeholder="828390"></div>
+        <div class="field f1"><label>메모</label><input id="vh-note" placeholder="빌트인캠, 어라운드뷰 요청"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('vehicleModal')">취소</button><button class="btn btn-primary" onclick="addVehicle()">저장</button></div>
+  </div>
+
+  <!-- Inventory -->
+  <div class="modal" id="invModal">
+    <div class="modal-head"><h3>📦 재고 등록</h3><button onclick="closeModal('invModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label>부품코드</label><input id="iv-code" placeholder="AMP-F001"></div>
+        <div class="field f2"><label>부품명</label><input id="iv-name" placeholder="냉매 필터 드라이어"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>현재고</label><input id="iv-qty" type="number"></div>
+        <div class="field"><label>최소재고</label><input id="iv-min" type="number"></div>
+        <div class="field"><label>단위</label><input id="iv-unit" placeholder="EA"></div>
+      </div>
+      <div class="form-row">
+        <div class="field f1"><label>위치</label><input id="iv-loc" placeholder="창고 A-3"></div>
+        <div class="field"><label>최종입고일</label><input id="iv-date" type="date"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('invModal')">취소</button><button class="btn btn-primary" onclick="addInv()">저장</button></div>
+  </div>
+
+  <!-- Parts -->
+  <div class="modal" id="partModal">
+    <div class="modal-head"><h3>⚙️ 부품 등록</h3><button onclick="closeModal('partModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label>코드</label><input id="pt-code" placeholder="AMP-F001"></div>
+        <div class="field f2"><label>부품명(한)</label><input id="pt-name-kr" placeholder="냉매 필터 드라이어"></div>
+      </div>
+      <div class="form-row">
+        <div class="field f2"><label>부품명(영)</label><input id="pt-name-en" placeholder="Filter Drier"></div>
+        <div class="field f1"><label>호환모델</label><input id="pt-model" placeholder="Supra/Vector"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>단가(USD)</label><input id="pt-usd" type="number" step="0.01"></div>
+        <div class="field"><label>단가(KRW)</label><input id="pt-krw" type="number"></div>
+        <div class="field f1"><label>공급처</label><input id="pt-supplier"></div>
+      </div>
+      <div class="form-row"><div class="field f1"><label>스펙 메모</label><textarea id="pt-spec" rows="2"></textarea></div></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('partModal')">취소</button><button class="btn btn-primary" onclick="addPart()">저장</button></div>
+  </div>
+
+  <!-- Supplier -->
+  <div class="modal" id="supplierModal">
+    <div class="modal-head"><h3>🏢 업체 등록</h3><button onclick="closeModal('supplierModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field f2"><label>업체명</label><input id="sp-name"></div>
+        <div class="field"><label>구분</label><select id="sp-type"><option>구매처</option><option>판매처</option><option>양방향</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="field f1"><label>담당자</label><input id="sp-contact"></div>
+        <div class="field f1"><label>연락처</label><input id="sp-tel"></div>
+      </div>
+      <div class="form-row">
+        <div class="field f1"><label>이메일</label><input id="sp-email"></div>
+        <div class="field f1"><label>주요품목</label><input id="sp-items"></div>
+      </div>
+      <div class="form-row">
+        <div class="field f1"><label>결제조건</label><input id="sp-terms" placeholder="30일 후 결제"></div>
+        <div class="field f1"><label>비고</label><input id="sp-note"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('supplierModal')">취소</button><button class="btn btn-primary" onclick="addSupplier()">저장</button></div>
+  </div>
+
+</div><!-- /modal-overlay -->
+
+<div id="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
