@@ -425,6 +425,41 @@ function delBtn(idx, arr, renderFn) {
   return `<button class="btn btn-sm btn-danger" onclick="db.${arr}.splice(${idx},1);dbSave();${renderFn}();renderHome()">삭제</button>`;
 }
 
+/* ── 모바일 네비 ── */
+function gotoMobile(page, navEl) {
+  document.querySelectorAll('.mnav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  else {
+    const found = document.querySelector(`.mnav-item[data-page="${page}"]`);
+    if (found) found.classList.add('active');
+  }
+  goto(page);
+  closeMobileMenu();
+}
+
+function toggleMobileMenu() {
+  const menu = el('mobile-menu');
+  const overlay = el('mobile-menu-overlay');
+  const isOpen = menu.classList.contains('show');
+  if (isOpen) { menu.classList.remove('show'); overlay.classList.remove('show'); }
+  else { menu.classList.add('show'); overlay.classList.add('show'); }
+}
+
+function closeMobileMenu() {
+  el('mobile-menu').classList.remove('show');
+  el('mobile-menu-overlay').classList.remove('show');
+}
+
+// 미읽음 배지 모바일 동기화
+const _origRenderHome = renderHome;
+// 모바일 배지 업데이트
+function updateMnavBadge() {
+  const unread = db.emails.filter(e=>!e.read).length;
+  const mb = el('mnav-unread');
+  if (mb) { mb.textContent = unread; mb.style.display = unread ? '' : 'none'; }
+}
+
 /* ── 초기화 ── */
 dbLoad();
 renderHome();
+updateMnavBadge();
